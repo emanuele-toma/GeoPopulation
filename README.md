@@ -19,7 +19,9 @@ Per utilizzare questo progetto, è necessario modificare i seguenti parametri:
 
 Inoltre, è necessario specificare il file FILE contenente la densità di popolazione.
 
-Una volta impostati i parametri, esegui il file .py . Il programma creerà un file di testo 'output-{numero quadrante}.txt' contenente le coordinate delle posizioni con densità di popolazione maggiore o uguale al valore di THRESHOLD. Inoltre se si setta IMMAGINE = True, verrà mostrata un'immagine rappresentante le coordinate estratte.
+Una volta impostati i parametri, esegui il file .py. 
+
+Il programma creerà un file di testo 'output-{numero quadrante}.txt' contenente le coordinate delle posizioni con densità di popolazione maggiore o uguale al valore di THRESHOLD. Inoltre se si imposta IMMAGINE = True, verrà mostrata un'immagine rappresentante le coordinate estratte.
 
 ## Note
 
