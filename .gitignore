@@ -1,1 +1,2 @@
-./popolazione/gpw*
+/popolazione/*
+!/popolazione/README.txt
