@@ -4,7 +4,7 @@ https://sedac.ciesin.columbia.edu/data/set/gpw-v4-population-density-rev11/data-
 
 oppure per evitare la registrazione/login:
 
-https://github.com/emanuele-toma/GeoPopulation/releases/download/v1.0.0/gpw-v4-population-density-rev11_2020_30_sec_asc.zip
+https://github.com/emanuele-toma/GeoPopulation/releases/latest
 
 Temporal: Single Year
 FileFormat: ASCII
