@@ -1,17 +1,17 @@
 from PIL import Image
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from waitress import serve
 import hashlib
 import os
 import threading
 import random
 import base64
-import geopandas as gpd
-from matplotlib.colors import ListedColormap  
-import matplotlib.patheffects as pe
 import io
 import shutil
 import time
+import sys
+import smopy
+from geopy.geocoders import Nominatim
 
 app = Flask(__name__)
 
@@ -35,14 +35,20 @@ def generate_map(QUADRANTE, THRESHOLD):
         if not os.path.exists(DIRECTORY_PATH + '/status.txt'):
             os.rmdir(DIRECTORY_PATH)
 
-    thread = threading.Thread(target=thread_generate_map, args=(DIRECTORY_PATH, QUADRANTE, THRESHOLD))
+    thread = threading.Thread(target=thread_generate_map, args=(DIRECTORY_PATH, QUADRANTE, THRESHOLD), daemon=True)
     thread.start()
 
     return jsonify({'status': '0', 'hash': HASH}), 200
 
-@app.route('/api/v1/get_random_map/<HASH>', methods=['GET'])
-def get_random_map(HASH):
+@app.route('/api/v1/random_map_data/<HASH>', defaults={'SEED': None}, methods=['GET'])
+@app.route('/api/v1/random_map_data/<HASH>/', defaults={'SEED': None}, methods=['GET'])
+@app.route('/api/v1/random_map_data/<HASH>/<int:SEED>', methods=['GET'])
+def get_random_map_data(HASH, SEED):
     DIRECTORY_PATH = 'jobs/' + HASH
+
+    if SEED is not None:
+        if not isinstance(SEED, int):
+            return jsonify({'error': 'Seed deve essere un numero intero'}), 400
 
     if not os.path.exists(DIRECTORY_PATH):
         return jsonify({'error': 'Hash non trovato'}), 404
@@ -58,21 +64,58 @@ def get_random_map(HASH):
 
     if status == '100':
         with open(DIRECTORY_PATH + '/output.txt', 'r') as file:
-            line = random_line(file)
+            line, SEED = random_line(file, SEED)
             line = line.replace('\n', '').split(', ')
 
-            marked_map = get_map_image(line[0], line[1])
+            marked_map = get_map_image(line[0], line[1], 15, 15, 15)
 
             return jsonify({
                 'hash': HASH,
                 'latitudine': line[0],
                 'longitudine': line[1],
                 'coordinates': line[0] + ', ' + line[1],
+                'seed': SEED,
+                'address': reverse_coordinates(line[0], line[1]),
                 'gmaps': 'https://maps.google.com/?q=' + line[0] + ',' + line[1],
                 'map': marked_map
                 }), 200
 
-@app.route('/api/v1/get_map/<HASH>', methods=['GET'])
+@app.route('/api/v1/random_map/<HASH>', defaults={'SEED': None}, methods=['GET'])
+@app.route('/api/v1/random_map/<HASH>/', defaults={'SEED': None}, methods=['GET'])
+@app.route('/api/v1/random_map/<HASH>/<int:SEED>', methods=['GET'])
+def get_random_map(HASH, SEED):
+    DIRECTORY_PATH = 'jobs/' + HASH
+
+    # check if seed is either none or an integer
+    if SEED is not None:
+        if not isinstance(SEED, int):
+            return jsonify({'error': 'Seed deve essere un numero intero'}), 400
+
+    if not os.path.exists(DIRECTORY_PATH):
+        return jsonify({'error': 'Hash non trovato'}), 404
+
+    if not os.path.exists(DIRECTORY_PATH + '/status.txt'):
+        return jsonify({'error': 'Hash non trovato'}), 404
+
+    with open(DIRECTORY_PATH + '/status.txt', 'r') as file:
+        status = file.read()
+
+    if status < '100':
+        return jsonify({'error': 'Job in corso'}), 400
+
+    if status == '100':
+        with open(DIRECTORY_PATH + '/output.txt', 'r') as file:
+            line, SEED = random_line(file, SEED)
+            line = line.replace('\n', '').split(', ')
+
+            marked_map = get_map_image(line[0], line[1], 15, 15, 15)
+
+            marked_map = base64.b64decode(marked_map)
+            file_name = str(SEED) + '.png'
+            
+            return Response(marked_map, mimetype='image/png', headers={'Content-Disposition': 'filename=' + file_name})
+
+@app.route('/api/v1/map/<HASH>', methods=['GET'])
 def get_map(HASH):
     DIRECTORY_PATH = 'jobs/' + HASH
 
@@ -181,46 +224,42 @@ def thread_generate_map(DIRECTORY_PATH, QUADRANTE, THRESHOLD):
     with open(DIRECTORY_PATH + '/status.txt', 'w') as file:
         file.write('100')
 
-def random_line(afile):
+def random_line(afile, seed=None):
+    if seed is None:
+        seed =  random.randrange(sys.maxsize)
+
+    rng = random.Random(seed)
+
     line = next(afile)
     for num, aline in enumerate(afile, 2):
-        if random.randrange(num):
+        if rng.randrange(num):
             continue
         line = aline
-    return line
+    return (line, seed)
 
-def get_map_image(lat, lon):
-    
-    gdf = gpd.GeoDataFrame(
-        {
-            'geometry': gpd.points_from_xy([lon], [lat])
-        }, crs="EPSG:4326")
-    
-    world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-
-    mycolor = ListedColormap(['#6ea133'])
-
-    ax = world.plot(color='white', edgecolor='black', cmap=mycolor)
-    
-    ax.set_xlim([float(lon) - 30, float(lon) + 30])
-    ax.set_ylim([float(lat) - 30, float(lat) + 30])
-
-    gdf.plot(ax=ax, color='red', markersize=1)
-    
-    for x, y, label in zip(world.geometry.centroid.x, world.geometry.centroid.y, world.name):
-        ax.annotate(label, xy=(x, y), ha='center', fontsize=4, color='black', path_effects=[pe.withStroke(linewidth=1, foreground='#6ea133')])
-
+def get_map_image(lat, lon, sizex, sizey, zoom):
+    geolocator = Nominatim(user_agent="geoApp")
+    location = geolocator.reverse(str(lat) + ", " + str(lon))
+    map = smopy.Map((location.latitude, location.longitude), z=zoom)
+    x, y = map.to_pixels(location.latitude, location.longitude)
+    ax = map.show_mpl(figsize=(sizex, sizey))
+    ax.plot(x, y, 'or', ms=10, mew=2)
+    fig=ax.figure
     buf = io.BytesIO()
-    
-    fig = ax.get_figure()
-    fig.savefig(buf, format='png', dpi=600)
-    
+    fig.savefig(buf, format='png', dpi=600)    
     data = base64.b64encode(buf.getbuffer()).decode("utf8")
     buf.close()
     return data
 
+def reverse_coordinates(lat, lon):
+    geolocator = Nominatim(user_agent="GeoPopulation")
+    location = geolocator.reverse(str(lat) + ", " + str(lon))
+    if location is None:
+        return None
+    return location.address
+
 def delete_old_folders(max_time=3*60*60, size=2 * 1024 * 1024 * 1024):
-    print('Spazzino attivo')
+    print('Pulizia cartelle attiva')
     while True:
         total_size = 0
         for path, dirs, files in os.walk('./jobs'):
@@ -233,12 +272,51 @@ def delete_old_folders(max_time=3*60*60, size=2 * 1024 * 1024 * 1024):
             shutil.rmtree('./jobs/' + oldest_folder)
         else:
             for folder in os.listdir('./jobs'):
+                if not os.path.isdir('./jobs/' + folder):
+                    continue
+
                 if max_time < time.time() - os.path.getmtime('./jobs/' + folder):
                     print('Eliminazione cartella: ' + folder)
                     shutil.rmtree('./jobs/' + folder)
-        time.sleep(2)
+        time.sleep(60)
+
+def checks():
+    try:
+        from PIL import Image
+        from flask import Flask, request, jsonify, Response
+        from waitress import serve
+        import hashlib
+        import os
+        import threading
+        import random
+        import base64
+        import io
+        import shutil
+        import time
+        import sys
+        import smopy
+        from geopy.geocoders import Nominatim
+    except ImportError:
+        print('Errore: uno o più pacchetti non sono installati')
+        print('Eseguire il comando: pip install -r requirements-api.txt')
+        exit()
+
+    for i in range(1, 8):
+        if not os.path.isfile('./popolazione/gpw_v4_population_density_rev11_2020_30_sec_' + str(i) + '.asc'):
+            print('Errore: Uno o più file popolazione non sono stati trovati')
+            exit()
+    
+    import socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.settimeout(1)
+        s.bind(('', 8181))
+    except socket.error as e:
+        print('Errore: la porta 8181 è già in uso')
+        exit()
 
 if __name__ == '__main__':
+    checks()
     print('API in ascolto su http://localhost:8181/api/v1/')
     thread = threading.Thread(target=delete_old_folders, daemon=True)
     thread.start()
