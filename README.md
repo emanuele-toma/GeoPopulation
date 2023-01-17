@@ -64,7 +64,7 @@ Per installare i moduli necessari è possibile utilizzare il comando `pip instal
     * Parametri:
         * QUADRANTE: intero compreso tra 1 e 8 che rappresenta il quadrante della mappa da generare
         * THRESHOLD: intero maggiore o uguale a 0 che rappresenta la soglia per la generazione della mappa
-    * Ritorna:
+    * Restituisce:
         * JSON con lo stato della generazione della mappa (0 se in corso, 100 se completato) e l'hash della richiesta
         * Codice di stato HTTP 200 in caso di successo, 400 in caso di parametri non validi
 
@@ -73,7 +73,7 @@ Per installare i moduli necessari è possibile utilizzare il comando `pip instal
     * Metodo: GET
     * Parametri:
         * HASH: stringa che rappresenta l'hash della richiesta di generazione della mappa
-    * Ritorna:
+    * Restituisce:
         * JSON con informazioni su una posizione casuale sulla mappa generata, tra cui latitudine e longitudine, indirizzo, link a Google Maps, immagine della mappa con la posizione segnalata e seed utilizzato per generare la posizione casuale
         * Codice di stato HTTP 200 in caso di successo, 404 in caso di hash non trovato o richiesta di generazione ancora in corso
 
@@ -83,8 +83,8 @@ Per installare i moduli necessari è possibile utilizzare il comando `pip instal
     * Parametri:
         * HASH: stringa che rappresenta l'hash della richiesta di generazione della mappa
         * SEED: intero che rappresenta il seed da utilizzare per generare la posizione casuale sulla mappa
-    * Ritorna:
-        * JSON con informazioni su una posizione casuale sulla mappa generata, tra cui latitudine e longitudine, indirizzo, link a Google Maps, immagine della mappa con la posizione segnalata e seed utilizzato per generare la posizione casuale
+    * Restituisce:
+        * JSON con informazioni su una posizione sulla mappa generata, tra cui latitudine e longitudine, indirizzo, link a Google Maps, immagine della mappa con la posizione segnalata e seed utilizzato per generare la posizione casuale
         * Codice di stato HTTP 200 in caso di successo, 404 in caso di hash non trovato o richiesta di generazione ancora in corso, 400 in caso di seed non valido
 
 4. `/api/v1/random_map/<HASH>`
@@ -92,8 +92,8 @@ Per installare i moduli necessari è possibile utilizzare il comando `pip instal
     * Metodo: GET
     * Parametri:
         * HASH: stringa che rappresenta l'hash della richiesta di generazione della mappa
-    * Ritorna:
-        * Immagine il cui nome corrisponde al seed di generazione del dato casuale
+    * Restituisce:
+        * Immagine che rappresenta un punto casuale del set il cui nome corrisponde al seed di generazione del dato casuale
         * Codice di stato HTTP 200 in caso di successo, 404 in caso di hash non trovato o richiesta di generazione ancora in corso
 
 5. `/api/v1/random_map/<HASH>/<int:SEED>`
@@ -102,9 +102,17 @@ Per installare i moduli necessari è possibile utilizzare il comando `pip instal
     * Parametri:
         * HASH: stringa che rappresenta l'hash della richiesta di generazione della mappa
         * SEED: intero che rappresenta il seed da utilizzare per generare la posizione casuale sulla mappa
-    * Ritorna:
-        * Immagine il cui nome corrisponde al seed di generazione del dato casuale
+    * Restituisce:
+        * Immagine che rappresenta un punto del set il cui nome corrisponde al seed di generazione del dato casuale
         * Codice di stato HTTP 200 in caso di successo, 404 in caso di hash non trovato o richiesta di generazione ancora in corso, 400 in caso di seed non valido.
+
+6. `/api/v1/map/<HASH>`
+
+    * Metodo: GET
+    * Parametri
+        * HASH: stringa che rappresenta l'hash della richiesta di generazione della mappa
+    * Restituisce:
+        * Immagine che comprende tutti i segnaposto
 
 ## Note:
 
