@@ -27,7 +27,7 @@ Inoltre se si imposta IMMAGINE = True, verrà mostrata un'immagine rappresentant
 
 Si prega di notare che questo progetto è stato scritto per un set di dati specifico e potrebbe non funzionare correttamente con altri set di dati.
 
-Per le istruzioni su come aggiungere il dataset leggere il [README](https://github.com/emanuele-toma/GeoPopulation/popolazione/README.txt) nella cartella popolazione.
+Per le istruzioni su come aggiungere il dataset leggere il [README](https://github.com/emanuele-toma/GeoPopulation/blob/main/popolazione/README.txt) nella cartella popolazione.
 
 Nei file del progetto è presente un'immagine di riferimento per capire quali valori inserire nei campi per la configurazione dei quadranti.
 
@@ -124,4 +124,4 @@ Se la cartella esiste ma non contiene il file "status.txt", la cartella viene el
 
 Si prega di notare che questo progetto è stato scritto per un set di dati specifico e potrebbe non funzionare correttamente con altri set di dati.
 
-Per le istruzioni su come aggiungere il dataset leggere il [README](https://github.com/emanuele-toma/GeoPopulation/popolazione/README.txt) nella cartella popolazione.
+Per le istruzioni su come aggiungere il dataset leggere il [README](https://github.com/emanuele-toma/GeoPopulation/blob/main/popolazione/README.txt) nella cartella popolazione.
