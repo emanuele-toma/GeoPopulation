@@ -79,6 +79,7 @@ def get_random_map_data(HASH, SEED):
                 'gmaps': 'https://maps.google.com/?q=' + line[0] + ',' + line[1],
                 'map': marked_map
                 }), 200
+    return jsonify({'error': 'Internal Server Error'}), 500
 
 @app.route('/api/v1/random_map/<HASH>', defaults={'SEED': None}, methods=['GET'])
 @app.route('/api/v1/random_map/<HASH>/', defaults={'SEED': None}, methods=['GET'])
